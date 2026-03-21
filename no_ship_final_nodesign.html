@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>No Ship — Island Survival Game</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg:#f8fafc;--card:#fff;--border:#e2e8f0;
+    --text:#1e293b;--muted:#64748b;--accent:#3b82f6;
+    --danger:#ef4444;--hp:#22c55e;
+    --radius:14px;--font:'Nunito',sans-serif;--title:'Fredoka One',cursive;
+  }
+  body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;}
+  h1,h2,h3,.game-title{font-family:var(--title);}
+  .screen{display:none;min-height:100vh;padding:2rem;max-width:1400px;margin:0 auto;}
+  .screen.active{display:block;}
+
+  /* SETUP */
+  .setup-header{text-align:center;margin-bottom:2.5rem;}
+  .game-title{font-size:3rem;color:#1e293b;letter-spacing:1px;}
+  .game-title span{color:#3b82f6;}
+  .subtitle{color:var(--muted);font-size:1rem;margin-top:0.25rem;font-weight:600;}
+  .credit{font-size:0.75rem;color:#94a3b8;margin-top:0.5rem;}
+  .mode-cards{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:2rem;}
+  .mode-card{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);padding:1.5rem;cursor:pointer;transition:all 0.2s;}
+  .mode-card:hover{border-color:#93c5fd;background:#f0f9ff;}
+  .mode-card.selected{border-color:var(--accent);background:#eff6ff;}
+  .mode-card h3{font-size:1.1rem;margin-bottom:0.5rem;font-weight:800;}
+  .mode-card p{font-size:0.85rem;color:var(--muted);}
+  .mode-icon{font-size:2rem;margin-bottom:0.5rem;}
+  .how-to-play summary{font-size:0.8rem;color:var(--accent);cursor:pointer;font-weight:700;list-style:none;margin-top:0.75rem;}
+  .how-to-play summary::-webkit-details-marker{display:none;}
+  .how-to-play summary::before{content:"▶ ";font-size:0.65rem;}
+  details[open] .how-to-play summary::before{content:"▼ ";}
+  .how-to-play-content{font-size:0.8rem;color:var(--muted);margin-top:0.5rem;line-height:1.6;}
+  .how-to-play-content ol{padding-left:1.2rem;}
+  .how-to-play-content li{margin-bottom:0.3rem;}
+  .config-section{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;margin-bottom:1.5rem;}
+  .config-section h3{font-size:1rem;font-weight:800;margin-bottom:1rem;color:var(--text);}
+  .team-count-row{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;}
+  .team-count-btn{width:44px;height:44px;border:2px solid var(--border);border-radius:10px;background:var(--bg);font-size:1.1rem;font-weight:800;cursor:pointer;transition:all 0.15s;font-family:var(--font);}
+  .team-count-btn:hover{border-color:var(--accent);}
+  .team-count-btn.selected{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .team-names-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:0.75rem;margin-top:0.75rem;}
+  .team-name-input{width:100%;padding:0.6rem 0.8rem;border:2px solid var(--border);border-radius:10px;font-size:0.9rem;font-family:var(--font);font-weight:700;outline:none;transition:border-color 0.15s;}
+  .team-name-input:focus{border-color:var(--accent);}
+  .items-mode-tabs{display:flex;gap:0.5rem;margin-bottom:1rem;}
+  .items-tab{padding:0.4rem 1rem;border:2px solid var(--border);border-radius:8px;background:var(--bg);font-size:0.82rem;font-weight:800;cursor:pointer;font-family:var(--font);color:var(--muted);transition:all 0.15s;}
+  .items-tab.active{background:#ede9fe;border-color:#a855f7;color:#5b21b6;}
+  .items-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:0.6rem;margin-top:0.5rem;}
+  .item-input{width:100%;padding:0.6rem 0.8rem;border:2px solid var(--border);border-radius:10px;font-size:0.85rem;font-family:var(--font);font-weight:600;text-align:center;outline:none;transition:border-color 0.15s;}
+  .item-input:focus{border-color:#a855f7;}
+  .item-input::placeholder{font-weight:400;color:#94a3b8;}
+  .per-team-items{display:flex;flex-direction:column;gap:0.75rem;}
+  .per-team-row{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:0.75rem;}
+  .per-team-label{font-size:0.78rem;font-weight:800;color:var(--muted);margin-bottom:0.5rem;letter-spacing:0.5px;text-transform:uppercase;}
+  .per-team-inputs{display:grid;grid-template-columns:repeat(5,1fr);gap:0.4rem;}
+  .csv-upload-area{border:2px dashed var(--border);border-radius:10px;padding:1.5rem;text-align:center;cursor:pointer;transition:all 0.2s;}
+  .csv-upload-area:hover{border-color:var(--accent);background:#f0f9ff;}
+  .csv-upload-area input{display:none;}
+  .csv-upload-area p{color:var(--muted);font-size:0.85rem;font-weight:600;}
+  .csv-preview{margin-top:0.75rem;max-height:150px;overflow-y:auto;}
+  .csv-q-item{font-size:0.8rem;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.7rem;margin-bottom:0.4rem;color:var(--text);}
+  .csv-q-answer{color:#16a34a;font-weight:700;font-size:0.75rem;}
+  .timer-config{display:flex;align-items:center;gap:0.75rem;}
+  .timer-config label{font-size:0.9rem;font-weight:700;color:var(--muted);}
+  .timer-config input[type=number]{width:80px;padding:0.5rem;border:2px solid var(--border);border-radius:8px;font-size:1rem;font-weight:700;font-family:var(--font);outline:none;text-align:center;}
+  .timer-config input[type=number]:focus{border-color:var(--accent);}
+  .start-btn{width:100%;padding:1rem;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:1.2rem;font-family:var(--title);letter-spacing:1px;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 15px rgba(59,130,246,0.3);}
+  .start-btn:hover{background:#2563eb;transform:translateY(-1px);}
+
+  /* GAME */
+  .game-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;}
+  .game-title-small{font-size:1.5rem;color:var(--text);}
+  .round-badge{background:var(--accent);color:#fff;padding:0.4rem 1rem;border-radius:999px;font-weight:800;font-size:0.9rem;}
+  .back-btn{padding:0.4rem 1rem;border:2px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer;font-size:0.85rem;font-weight:700;font-family:var(--font);color:var(--muted);transition:all 0.15s;}
+  .back-btn:hover{border-color:var(--danger);color:var(--danger);}
+  .islands-table-wrapper{overflow-x:auto;margin-bottom:1.5rem;}
+  .islands-table{width:100%;border-collapse:separate;border-spacing:0.5rem;min-width:500px;}
+  .island-header{padding:0.6rem 0.5rem;border-radius:10px;text-align:center;font-size:0.8rem;font-weight:800;letter-spacing:0.5px;}
+  .island-cell{background:var(--card);border:2px solid var(--border);border-radius:12px;padding:0.75rem 0.5rem;text-align:center;vertical-align:top;transition:all 0.2s;min-width:140px;}
+  .island-cell.rescued{opacity:0.45;background:#f1f5f9;}
+  .team-name-display{font-weight:800;font-size:0.9rem;margin-bottom:0.5rem;}
+  .hp-display{display:flex;justify-content:center;gap:5px;margin-bottom:0.6rem;flex-wrap:wrap;}
+  .hp-heart{font-size:1.3rem;display:inline-block;}
+  .hp-heart.lost{filter:grayscale(1);opacity:0.3;}
+  .rescued-badge{background:#fef2f2;color:#dc2626;font-size:0.75rem;font-weight:700;padding:0.2rem 0.6rem;border-radius:999px;border:1px solid #fecaca;margin-bottom:0.5rem;display:inline-block;}
+  .team-items-list{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin-top:0.4rem;}
+  .item-badge{font-size:0.72rem;font-weight:700;padding:2px 8px;border-radius:999px;background:#ede9fe;color:#5b21b6;border:1px solid #c4b5fd;cursor:pointer;transition:all 0.15s;user-select:none;}
+  .item-badge:hover{background:#c4b5fd;}
+  .item-badge.used{background:#f1f5f9;color:#94a3b8;border-color:#e2e8f0;text-decoration:line-through;cursor:default;}
+  .scenario-box{background:#f8fafc;border:1.5px solid var(--border);border-radius:10px;font-size:0.78rem;color:var(--muted);padding:0.5rem;margin-top:0.4rem;min-height:45px;line-height:1.4;cursor:pointer;transition:all 0.2s;font-weight:600;text-align:left;}
+  .scenario-box:hover{background:#f0f9ff;border-color:#93c5fd;}
+  .hp-adj{display:flex;gap:4px;justify-content:center;margin-top:4px;}
+  .hp-adj button{font-size:0.7rem;padding:1px 7px;border:1px solid var(--border);border-radius:6px;background:var(--bg);cursor:pointer;font-family:var(--font);font-weight:700;transition:all 0.12s;}
+  .hp-adj button:first-child:hover{border-color:var(--danger);color:var(--danger);}
+  .hp-adj button:last-child:hover{border-color:var(--hp);color:var(--hp);}
+
+  /* SPOTLIGHT */
+  .scenario-spotlight{position:fixed;inset:0;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;z-index:100;padding:1rem;}
+  .spotlight-card{background:var(--card);border-radius:20px;max-width:550px;width:100%;padding:2rem;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);}
+  .spotlight-island-name{font-size:0.85rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem;}
+  .spotlight-team-name{font-size:1.4rem;font-family:var(--title);margin-bottom:1rem;}
+  .spotlight-scenario{font-size:1.2rem;font-weight:700;line-height:1.5;margin-bottom:1.5rem;color:var(--text);}
+  .spotlight-close{padding:0.6rem 1.5rem;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:0.9rem;font-weight:800;font-family:var(--font);cursor:pointer;}
+
+  /* CONTROLS */
+  .controls-bar{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:1.5rem;}
+  .divider{width:1px;height:40px;background:var(--border);}
+  .label-sm{font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);}
+  .timer-widget{display:flex;align-items:center;gap:0.5rem;}
+  .timer-display{font-family:var(--title);font-size:1.8rem;min-width:70px;color:var(--text);}
+  .timer-display.warning{color:#ef4444;animation:pulse 0.5s infinite alternate;}
+  @keyframes pulse{from{opacity:1;}to{opacity:0.5;}}
+  .timer-btn{width:36px;height:36px;border:2px solid var(--border);border-radius:8px;background:var(--bg);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;font-family:var(--font);transition:all 0.15s;}
+  .timer-btn:hover{border-color:var(--accent);}
+  .timer-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .timer-btn.stop-btn:hover{border-color:var(--danger);}
+  .ctrl-btn{padding:0.5rem 1.1rem;border:none;border-radius:10px;font-weight:800;font-family:var(--font);font-size:0.85rem;cursor:pointer;transition:all 0.15s;color:#fff;}
+  .ctrl-btn.teal{background:#0f766e;}.ctrl-btn.teal:hover{background:#0d9488;}
+  .ctrl-btn.purple{background:#7c3aed;}.ctrl-btn.purple:hover{background:#6d28d9;}
+  .ctrl-btn.red{background:#dc2626;}.ctrl-btn.red:hover{background:#b91c1c;}
+
+  /* BIG DICE MODAL */
+  .dice-modal{position:fixed;inset:0;background:rgba(15,23,42,0.85);display:flex;align-items:center;justify-content:center;z-index:200;padding:1rem;}
+  .dice-modal-card{background:var(--card);border-radius:24px;max-width:420px;width:100%;padding:2.5rem 2rem;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,0.4);}
+  .dice-team-label{font-size:0.8rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem;}
+  .dice-team-name{font-family:var(--title);font-size:2rem;margin-bottom:1.2rem;color:var(--text);}
+  .big-dice-face{font-size:6rem;line-height:1;margin-bottom:0.8rem;display:block;}
+  .big-dice-face.rolling{animation:diceAnim 0.45s ease-out;}
+  @keyframes diceAnim{0%{transform:rotate(-15deg) scale(0.8);}40%{transform:rotate(8deg) scale(1.12);}70%{transform:rotate(-4deg) scale(1.05);}100%{transform:rotate(0) scale(1);}}
+  .dice-hp-result{font-size:1.5rem;font-weight:800;margin:0.5rem 0 1.5rem;min-height:2.2rem;}
+  .dice-hp-result.lose{color:#dc2626;}
+  .dice-hp-result.keep{color:var(--muted);}
+  .dice-hp-result.gain{color:#16a34a;}
+  .dice-progress{font-size:0.8rem;color:var(--muted);font-weight:700;margin-bottom:1rem;}
+  .big-roll-btn{width:100%;padding:0.9rem;background:#7c3aed;color:#fff;border:none;border-radius:12px;font-weight:800;font-family:var(--font);font-size:1.1rem;cursor:pointer;transition:all 0.2s;margin-bottom:0.6rem;}
+  .big-roll-btn:hover{background:#6d28d9;}
+  .big-roll-btn:disabled{background:#94a3b8;cursor:not-allowed;}
+  .next-team-btn{width:100%;padding:0.75rem;background:#0f766e;color:#fff;border:none;border-radius:12px;font-weight:800;font-family:var(--font);font-size:1rem;cursor:pointer;}
+  .next-team-btn:hover{background:#0d9488;}
+
+  /* Q PANEL */
+  .question-panel{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);padding:1.5rem;margin-bottom:1.5rem;text-align:center;}
+  .q-label{font-size:0.75rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+  .question-text{font-size:1.3rem;font-weight:800;line-height:1.5;margin:0.5rem 0 1rem;}
+  .answer-reveal-btn{padding:0.6rem 1.5rem;background:#16a34a;color:#fff;border:none;border-radius:10px;font-weight:800;font-family:var(--font);font-size:0.9rem;cursor:pointer;}
+  .answer-text{font-size:1rem;font-weight:700;color:#16a34a;margin-top:0.75rem;display:none;}
+  .answer-text.visible{display:block;}
+  .correct-section{margin-top:1rem;}
+  .correct-section-label{font-size:0.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:0.4rem;}
+  .correct-btns{display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:center;margin-top:0.3rem;}
+  .correct-btn{padding:0.4rem 0.8rem;border:2px solid #bbf7d0;background:#f0fdf4;color:#15803d;border-radius:8px;font-size:0.8rem;font-weight:700;font-family:var(--font);cursor:pointer;transition:all 0.15s;}
+  .correct-btn:hover{background:#dcfce7;}
+  .correct-btn.marked{background:#15803d;color:#fff;border-color:#15803d;}
+  .apply-scores-btn{margin-top:0.75rem;padding:0.55rem 1.4rem;background:#7c3aed;color:#fff;border:none;border-radius:10px;font-weight:800;font-family:var(--font);font-size:0.85rem;cursor:pointer;}
+  .apply-scores-btn:hover{background:#6d28d9;}
+
+  .roll-for-team-btn{margin-top:6px;width:100%;padding:4px 0;background:#ede9fe;color:#5b21b6;border:1.5px solid #c4b5fd;border-radius:8px;font-size:0.75rem;font-weight:800;font-family:var(--font);cursor:pointer;transition:all 0.15s;}
+  .roll-for-team-btn:hover{background:#c4b5fd;}
+
+  /* TIMER ADJUST */
+  .timer-adjust{display:flex;align-items:center;gap:4px;margin-top:4px;}
+  .timer-adj-btn{width:28px;height:28px;border:1.5px solid var(--border);border-radius:7px;background:var(--bg);font-size:0.78rem;font-weight:800;cursor:pointer;font-family:var(--font);color:var(--muted);transition:all 0.12s;display:flex;align-items:center;justify-content:center;}
+  .timer-adj-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .timer-adj-label{font-size:0.68rem;color:var(--muted);font-weight:700;}
+
+  /* PENALTY SCREEN */
+  .penalty-screen{padding:3rem 1rem;max-width:700px;margin:0 auto;}
+  .penalty-title{font-family:var(--title);font-size:2rem;text-align:center;margin-bottom:0.4rem;}
+  .penalty-subtitle{text-align:center;color:var(--muted);font-size:0.9rem;font-weight:600;margin-bottom:2rem;}
+  .penalty-cards{display:flex;flex-direction:column;gap:0.75rem;margin-bottom:2rem;}
+  .penalty-card{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);padding:1rem 1.25rem;display:flex;align-items:flex-start;gap:1rem;}
+  .penalty-card.has-penalty{border-color:#fca5a5;background:#fff5f5;}
+  .penalty-card.no-penalty{border-color:#bbf7d0;background:#f0fdf4;}
+  .penalty-team-name{font-weight:800;font-size:1rem;margin-bottom:0.3rem;}
+  .penalty-items{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:0.4rem;}
+  .penalty-item{font-size:0.75rem;font-weight:700;padding:2px 8px;border-radius:999px;}
+  .penalty-item.used{background:#ede9fe;color:#5b21b6;border:1px solid #c4b5fd;}
+  .penalty-item.unused{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;text-decoration:line-through;}
+  .penalty-hp-change{font-weight:800;font-size:0.9rem;}
+  .penalty-hp-change.bad{color:#dc2626;}
+  .penalty-hp-change.ok{color:#16a34a;}
+  .penalty-icon{font-size:2rem;flex-shrink:0;margin-top:2px;}
+  .penalty-rescued-note{font-size:0.75rem;color:#dc2626;font-weight:700;margin-top:2px;}
+  .continue-btn{display:block;width:100%;max-width:300px;margin:0 auto;padding:0.9rem;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:1.1rem;font-family:var(--title);cursor:pointer;text-align:center;}
+  .continue-btn:hover{background:#2563eb;}
+
+  /* WIN */
+  .win-screen{text-align:center;padding:3rem 1rem;}
+  .win-emoji{font-size:5rem;display:block;margin-bottom:1rem;}
+  .win-title{font-size:2.5rem;font-family:var(--title);margin-bottom:0.5rem;}
+  .win-subtitle{font-size:1rem;color:var(--muted);font-weight:600;margin-bottom:2rem;}
+  .win-teams{display:flex;flex-wrap:wrap;gap:0.75rem;justify-content:center;margin-bottom:2rem;}
+  .win-team-badge{background:linear-gradient(135deg,#3b82f6,#7c3aed);color:#fff;padding:0.6rem 1.4rem;border-radius:999px;font-weight:800;font-size:1rem;}
+  .play-again-btn{padding:0.8rem 2rem;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:1.1rem;font-family:var(--title);cursor:pointer;}
+
+  /* ISLAND THEMES */
+  .th-tropical{background:#dcfce7;color:#14532d;}
+  .th-desert{background:#fef3c7;color:#78350f;}
+  .th-mountain{background:#ede9fe;color:#4c1d95;}
+  .th-snowy{background:#e0f2fe;color:#0c4a6e;}
+  .th-volcano{background:#fee2e2;color:#7f1d1d;}
+  .th-jungle{background:#d1fae5;color:#065f46;}
+  .th-swamp{background:#fef9c3;color:#713f12;}
+  .th-cave{background:#f3f4f6;color:#1f2937;}
+
+  @media(max-width:700px){
+    .mode-cards{grid-template-columns:1fr;}
+    .items-grid,.per-team-inputs{grid-template-columns:repeat(3,1fr);}
+    .game-title{font-size:2rem;}
+    .screen{padding:1rem;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ SETUP ══ -->
+<div id="setupScreen" class="screen active">
+  <div class="setup-header">
+    <div class="game-title">🏝️ No <span>Ship</span></div>
+    <div class="subtitle">Island Survival Speaking Game</div>
+    <div class="credit">© 2026 eozkazanc</div>
+  </div>
+
+  <div class="mode-cards">
+    <div class="mode-card" id="modeItemsCard" onclick="selectMode('items')">
+      <div class="mode-icon">🎒</div>
+      <h3>Mode 1 — Items</h3>
+      <p>Teams pick 5 items to survive on their island. Use items in sentences to avoid danger!</p>
+      <details><summary class="how-to-play">How to play</summary>
+        <div class="how-to-play-content"><ol>
+          <li>Each team chooses 5 survival items (words / vocabulary) — without knowing their island yet!</li>
+          <li>Teams are then assigned to different islands (tropical, desert, mountain…).</li>
+          <li>Each round, every island gets a unique danger scenario.</li>
+          <li>Teams discuss for 2 minutes how to survive — they must use their items in sentences!</li>
+          <li>Teacher clicks an item badge when a team uses it → it gets crossed out.</li>
+          <li>At the end of the round, teacher clicks "Roll Dice". Each team rolls the big dice one by one: 1–2 = –1 HP, 3–4 = same HP, 5–6 = +1 HP.</li>
+          <li>0 HP = rescued off the island. Last team surviving wins!</li>
+          <li>End of game: each unused item = –1 HP. Use them all!</li>
+        </ol></div>
+      </details>
+    </div>
+    <div class="mode-card" id="modeQCard" onclick="selectMode('questions')">
+      <div class="mode-icon">❓</div>
+      <h3>Mode 2 — Questions</h3>
+      <p>Upload a question CSV. All teams answer each round. Correct = roll the dice. Wrong = –1 HP!</p>
+      <details><summary class="how-to-play">How to play</summary>
+        <div class="how-to-play-content"><ol>
+          <li>Teacher uploads a CSV with questions and answers.</li>
+          <li>Teams are assigned to different islands.</li>
+          <li>Each round: question shown, timer counts down, teams discuss.</li>
+          <li>Teacher reveals the correct answer, then marks which teams got it right.</li>
+          <li>Teams that got it WRONG automatically lose 1 HP.</li>
+          <li>Teams that got it RIGHT roll the big dice: 1–2 = –1 HP, 3–4 = same HP, 5–6 = +1 HP.</li>
+          <li>0 HP = rescued off the island. Last team surviving wins!</li>
+        </ol></div>
+      </details>
+    </div>
+  </div>
+
+  <div class="config-section">
+    <h3>👥 Number of Teams</h3>
+    <div class="team-count-row">
+      <button class="team-count-btn selected" onclick="setTeamCount(2)">2</button>
+      <button class="team-count-btn" onclick="setTeamCount(3)">3</button>
+      <button class="team-count-btn" onclick="setTeamCount(4)">4</button>
+      <button class="team-count-btn" onclick="setTeamCount(5)">5</button>
+      <button class="team-count-btn" onclick="setTeamCount(6)">6</button>
+    </div>
+    <div class="team-names-grid" id="teamNamesGrid" style="margin-top:1rem;"></div>
+  </div>
+
+  <div class="config-section" id="itemsConfig">
+    <h3>🎒 Items</h3>
+    <div class="items-mode-tabs">
+      <button class="items-tab active" id="tabSame" onclick="setItemsTab('same')">Same items for all teams</button>
+      <button class="items-tab" id="tabDiff" onclick="setItemsTab('different')">Different items per team</button>
+    </div>
+    <div id="sameItemsPanel">
+      <div class="items-grid">
+        <input class="item-input" id="item1" placeholder="Item 1"/>
+        <input class="item-input" id="item2" placeholder="Item 2"/>
+        <input class="item-input" id="item3" placeholder="Item 3"/>
+        <input class="item-input" id="item4" placeholder="Item 4"/>
+        <input class="item-input" id="item5" placeholder="Item 5"/>
+      </div>
+      <p style="font-size:0.78rem;color:var(--muted);margin-top:0.5rem;">💡 Great for vocabulary practice — all teams get the same target words.</p>
+    </div>
+    <div id="diffItemsPanel" style="display:none;">
+      <div class="per-team-items" id="perTeamItemsGrid"></div>
+      <p style="font-size:0.78rem;color:var(--muted);margin-top:0.5rem;">💡 Teams choose blind — they don't know their island yet! Each team enters their own items.</p>
+    </div>
+  </div>
+
+  <div class="config-section" id="questionsConfig" style="display:none;">
+    <h3>📋 Upload Questions (CSV)</h3>
+    <div class="csv-upload-area" onclick="document.getElementById('csvFile').click()">
+      <input type="file" id="csvFile" accept=".csv" onchange="loadCSV(event)"/>
+      <p>📂 Click to upload a CSV file</p>
+      <p style="margin-top:0.3rem;color:#94a3b8;font-size:0.75rem;">Format: question,answer  (one per line)</p>
+    </div>
+    <div class="csv-preview" id="csvPreview"></div>
+    <div class="timer-config" style="margin-top:1rem;">
+      <label>⏱ Answer time (seconds):</label>
+      <input type="number" id="qTimerSeconds" value="60" min="10" max="300"/>
+    </div>
+  </div>
+
+  <button class="start-btn" onclick="startGame()">🚀 Start Game</button>
+</div>
+
+<!-- ══ GAME ══ -->
+<div id="gameScreen" class="screen">
+  <div class="game-header">
+    <div class="game-title-small">🏝️ No Ship</div>
+    <div id="roundBadge" class="round-badge">Round 1 / 10</div>
+    <button class="back-btn" onclick="if(confirm('End game and return to setup?'))resetGame()">← New Game</button>
+  </div>
+
+  <div class="question-panel" id="questionPanel" style="display:none;">
+    <div class="q-label">Round Question</div>
+    <div class="question-text" id="questionText">—</div>
+    <button class="answer-reveal-btn" onclick="revealAnswer()">Reveal Answer</button>
+    <div class="answer-text" id="answerText"></div>
+    <div class="correct-section" id="correctSection" style="display:none;">
+      <div class="correct-section-label">Which teams got it right? (others lose –1 HP)</div>
+      <div class="correct-btns" id="correctBtns"></div>
+      <button class="apply-scores-btn" onclick="applyQScores()">Apply Scores &amp; Roll Dice →</button>
+    </div>
+  </div>
+
+  <div class="controls-bar">
+    <div>
+      <div class="label-sm">Timer</div>
+      <div class="timer-widget">
+        <div class="timer-display" id="timerDisplay">2:00</div>
+        <button class="timer-btn" id="timerStartBtn" onclick="toggleTimer()">▶</button>
+        <button class="timer-btn stop-btn" onclick="resetTimer()">↺</button>
+      </div>
+      <div class="timer-adjust">
+        <span class="timer-adj-label">Set:</span>
+        <button class="timer-adj-btn" onclick="setTimerTo(30)">30s</button>
+        <button class="timer-adj-btn" onclick="setTimerTo(60)">1m</button>
+        <button class="timer-adj-btn" onclick="setTimerTo(120)">2m</button>
+        <button class="timer-adj-btn" onclick="setTimerTo(180)">3m</button>
+        <button class="timer-adj-btn" onclick="adjustTimer(-30)">−30</button>
+        <button class="timer-adj-btn" onclick="adjustTimer(30)">+30</button>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div>
+      <div class="label-sm">Actions</div>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+        <button class="ctrl-btn purple" onclick="startRollPhase()" id="rollDiceBtn" style="display:none;">🎲 Roll Dice</button>
+        <button class="ctrl-btn teal" onclick="nextRound()">Next Round →</button>
+        <button class="ctrl-btn red" onclick="endGame()">End Game</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="islands-table-wrapper">
+    <table class="islands-table" id="islandsTable">
+      <thead><tr id="islandsHeaderRow"></tr></thead>
+      <tbody><tr id="islandsBodyRow"></tr></tbody>
+    </table>
+  </div>
+
+  <div class="scenario-spotlight" id="scenarioSpotlight" style="display:none;" onclick="closeSpotlight(event)">
+    <div class="spotlight-card">
+      <div class="spotlight-island-name" id="spotIslandName"></div>
+      <div class="spotlight-team-name" id="spotTeamName"></div>
+      <div class="spotlight-scenario" id="spotScenario"></div>
+      <button class="spotlight-close" onclick="document.getElementById('scenarioSpotlight').style.display='none'">Close</button>
+    </div>
+  </div>
+
+  <!-- Big Dice Modal -->
+  <div class="dice-modal" id="diceModal" style="display:none;">
+    <div class="dice-modal-card">
+      <div class="dice-team-label">Now rolling for</div>
+      <div class="dice-team-name" id="diceModalTeam">—</div>
+      <div class="dice-progress" id="diceProgress"></div>
+      <span class="big-dice-face" id="bigDiceFace">🎲</span>
+      <div class="dice-hp-result" id="diceHpResult"></div>
+      <button class="big-roll-btn" id="bigRollBtn" onclick="doRoll()">🎲 Roll!</button>
+      <button class="next-team-btn" id="nextTeamBtn" onclick="advanceDiceQueue()" style="display:none;">Next Team →</button>
+      <div id="diceTestResult" style="font-size:0.72rem;color:var(--muted);margin-top:0.75rem;min-height:1rem;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ITEM PENALTY SCREEN ══ -->
+<div id="penaltyScreen" class="screen">
+  <div class="penalty-screen">
+    <div class="penalty-title">🎒 Item Check!</div>
+    <div class="penalty-subtitle">Unused items cost –1 HP each. Here's the final count:</div>
+    <div class="penalty-cards" id="penaltyCards"></div>
+    <button class="continue-btn" onclick="showFinalWin()">See the Winner →</button>
+  </div>
+</div>
+
+<!-- ══ WIN ══ -->
+<div id="winScreen" class="screen">
+  <div class="win-screen">
+    <span class="win-emoji" id="winEmoji">🏆</span>
+    <div class="win-title" id="winTitle">Game Over!</div>
+    <div class="win-subtitle" id="winSubtitle"></div>
+    <div class="win-teams" id="winTeams"></div>
+    <button class="play-again-btn" onclick="resetGame()">🔁 Play Again</button>
+  </div>
+</div>
+
+<script>
+const ISLANDS=[
+  {key:'tropical',label:'🌴 Tropical',thClass:'th-tropical'},
+  {key:'desert',label:'🏜️ Desert',thClass:'th-desert'},
+  {key:'mountain',label:'⛰️ Mountain',thClass:'th-mountain'},
+  {key:'snowy',label:'❄️ Snowy',thClass:'th-snowy'},
+  {key:'volcano',label:'🌋 Volcano',thClass:'th-volcano'},
+  {key:'jungle',label:'🌿 Jungle',thClass:'th-jungle'},
+  {key:'swamp',label:'🐊 Swamp',thClass:'th-swamp'},
+  {key:'cave',label:'🦇 Cave',thClass:'th-cave'},
+];
+
+const SCENARIOS={
+  tropical:[
+    "A monkey takes all your food while you sleep!",
+    "A big wave hits your camp and gets everything wet.",
+    "You find a coconut tree but it is too tall to climb.",
+    "A parrot will not stop screaming and wakes everyone up.",
+    "There are jellyfish in the water. You cannot swim today.",
+    "Heavy rain puts out your fire.",
+    "A crab grabs your foot and will not let go!",
+    "Your water bottle has a hole. Water is coming out slowly.",
+    "The sand is so hot you cannot walk without shoes.",
+    "A turtle is eating all the fruit from your only tree.",
+    "You find a shell, but a strange animal is living inside.",
+    "The sea is rising fast. Your camp is getting wet.",
+    "You see a boat far away but have no way to send a signal.",
+    "You have a bad sunburn and it hurts to move.",
+    "Flies keep landing on your food every time you try to eat.",
+    "Birds ate all the berries you saved for later.",
+    "Strong wind knocked down your shelter last night.",
+    "You found water but it looks a strange colour.",
+    "A lot of fish swim near your raft but you have no net.",
+    "Your rope got stuck around a tree and you cannot pull it free.",
+    "It is so hot you cannot think clearly. You need to cool down now.",
+    "A small crab moved into your only cup.",
+    "You hear a big splash but cannot see what is in the water.",
+    "The bananas are almost ready to eat, but birds are watching them too.",
+    "You stepped on a sea urchin and your foot hurts a lot.",
+    "A coconut fell on your only tool and broke it.",
+    "There is seaweed on the beach. It smells bad, but maybe you can eat it.",
+    "You need to make a fire but everything is wet from the rain.",
+    "A big spider made its web across the path to your food bag.",
+    "You see footprints in the sand that are not yours.",
+    "You need to send a signal but all your paper got wet.",
+  ],
+  desert:[
+    "Your water bottle is empty and the next water is very far away.",
+    "A sandstorm is coming. You can see it in the distance.",
+    "A scorpion got into your bag while you slept.",
+    "The sun is so strong that your food is melting.",
+    "You found a cactus but do not know if it has water inside.",
+    "Your shoes are burning hot from the sand. You can hardly walk.",
+    "A camel keeps following you and will not go away.",
+    "You are lost. All the sand hills look the same.",
+    "It was very cold last night. You did not expect that.",
+    "A lizard ate your last snack.",
+    "You found some shade, but a snake is sleeping there.",
+    "The map you drew in the sand blew away in the wind.",
+    "You need to walk at night but you have no torch.",
+    "A large bird keeps flying in circles above your head.",
+    "You found a small pool of water but it tastes salty.",
+    "Your hat blew away. The sun is hitting your head directly.",
+    "You see something shiny far away. Is it water or just hot sand?",
+    "There is soft, dangerous sand blocking the path in front of you.",
+    "A small desert fox keeps trying to steal your backpack.",
+    "The only plant you can see has very sharp points.",
+    "You need to make a shelter but there are no trees, only rocks.",
+    "Your phone battery is at 1%. You need to save it.",
+    "You can see big footprints in the sand from something large.",
+    "The dry air is making your mouth very dry. You are thirsty fast.",
+    "You found a cave but it smells bad inside.",
+    "A small wind picked up your things and carried them away.",
+    "You hear thunder. It should not rain here. What is happening?",
+    "You dropped your last match and it landed in the sand.",
+    "The rocks are too hot to sit on and rest.",
+    "Your sun cream ran out after the first day.",
+    "A butterfly appeared in the desert. That is very strange.",
+  ],
+  mountain:[
+    "Falling rocks blocked the path back to camp.",
+    "You slipped on a wet rock and hurt your ankle.",
+    "The zip on your tent broke. It will be a cold night.",
+    "A goat took your sandwich right out of your hand.",
+    "The bridge over the river is broken. Only old pieces of wood are left.",
+    "You feel sick from being so high up. Your head hurts.",
+    "Clouds came in fast. You can only see a few metres ahead.",
+    "Your shoes got wet in the river. Your feet are very cold.",
+    "You found some berries but do not know if they are safe to eat.",
+    "The map is wrong. The path it shows is not there.",
+    "Strong wind knocked your backpack over and things fell out.",
+    "You got to the top but there is nowhere flat enough to sleep.",
+    "You hear a noise behind you. Is it an echo or an animal?",
+    "Your compass is pointing the wrong way near some big rocks.",
+    "You need to walk along a very narrow path above a steep drop.",
+    "It started snowing in the middle of the day.",
+    "A mountain goat is blocking the narrow path and will not move.",
+    "Your torch ran out of batteries just as it got dark.",
+    "The river is moving very fast. It is not safe to cross.",
+    "Thick clouds made you walk in circles for an hour.",
+    "You found a cave to sleep in, but something lives there.",
+    "Your sleeping bag got wet in the rain. It will not keep you warm.",
+    "You need to make a signal for help but cannot find flat ground.",
+    "A bird took the small mirror you used to signal planes.",
+    "The temperature dropped ten degrees in just one hour.",
+    "Your walking stick broke at the worst moment.",
+    "You found a waterfall but there is no way around it.",
+    "Mud and rocks covered the path you came up on.",
+    "You hear a howling sound. Is it wolves or just the wind?",
+    "Your rope is two metres too short.",
+    "There are stars but you do not know which way is north.",
+  ],
+  snowy:[
+    "Your shoes got wet in the snow. Your toes feel numb.",
+    "An avalanche blocked the path and buried your things.",
+    "You cannot start a fire because everything is covered in snow.",
+    "A snowstorm is coming fast. You need shelter now.",
+    "Your water is frozen solid. You cannot melt it.",
+    "You stepped into a hidden hole under the snow.",
+    "A polar bear is sleeping between you and your camp.",
+    "Your gloves have a hole in them. Your fingers are getting cold.",
+    "The ice on the lake looks strong. But is it really safe?",
+    "You fell into deep snow up to your waist. You are stuck.",
+    "Your food is frozen and will not come out of the tin.",
+    "You can hear the ice making cracking sounds under your feet.",
+    "A snowflake got in your eye. You can hardly see now.",
+    "You were supposed to meet your group but they have not come.",
+    "Your goggles got foggy. You cannot see the edge of the cliff.",
+    "A small white fox took your map.",
+    "You need to make a snow shelter but have no shovel.",
+    "A blizzard covered your footprints. You cannot find the way back.",
+    "Your radio stopped working because of the cold.",
+    "You need to get to the other side of a frozen river.",
+    "The tent poles broke under the weight of heavy snow.",
+    "A snow owl is watching you from a tree. It makes you nervous.",
+    "The ice bridge you walked over this morning is now gone.",
+    "You have only one match left and need to start a fire.",
+    "You see animal footprints in the snow going to your camp.",
+    "Your backpack straps broke. Your things are too heavy now.",
+    "It gets dark four hours earlier than you expected.",
+    "You need to climb an icy slope but have nothing to hold on to.",
+    "You hear a cracking sound. Is it the ice or just the wind?",
+    "You wake up and your boots are completely frozen.",
+    "A reindeer ate your emergency snack while you were looking away.",
+  ],
+  volcano:[
+    "A small river of lava is moving toward your camp.",
+    "Ash is falling from the sky and getting into your eyes.",
+    "The ground feels warm under your feet. It might be very thin.",
+    "Smoke is coming out of a crack in the ground near you.",
+    "Rocks are falling down from the side of the volcano.",
+    "The air smells like rotten eggs. Gas is nearby.",
+    "Your water is turning orange from the minerals in the rocks.",
+    "A small earthquake shook the ground. Your things rolled down the hill.",
+    "The path you planned to escape on is covered in old hard lava.",
+    "You need to cross an old lava field. The rocks are very sharp.",
+    "A sudden hot wind knocked down your shelter.",
+    "You hear a deep rumbling sound under the ground. It is getting louder.",
+    "Your food cooked too fast because the rocks are very hot.",
+    "The only safe path goes very close to an active gas hole.",
+    "Your plastic bottles are changing shape from the heat.",
+    "A small explosion sent rocks flying toward your camp.",
+    "The sky turned orange from ash. It is hard to breathe.",
+    "You need to move fast but the sharp rocks are cutting your feet.",
+    "A bird flew away very fast. What does it know that you do not?",
+    "The map shows a safe area, but the path to it is making steam.",
+    "You found a stream but the water is too hot to drink.",
+    "Everything metal you brought is too hot to touch now.",
+    "Your compass is spinning. The rocks here are magnetic.",
+    "The glow of the lava makes it very hard to sleep at night.",
+    "You need to cover your nose but have no cloth left.",
+    "A crack appeared in the rock you were using as a table.",
+    "Nearby gas holes are making sounds. But that might be the fastest way out.",
+    "Your thermometer broke. You cannot tell how hot it is getting.",
+    "You see a helicopter far away but ash clouds might block it from seeing you.",
+    "A small piece of hot rock landed five metres from you while you ate.",
+    "You found a cave to stay in but the smell of gas is very strong.",
+  ],
+  jungle:[
+    "A huge spider built its web right across the path to the river.",
+    "You can hear something big moving in the bushes behind you.",
+    "Your clothes got very wet from the rain and will not dry.",
+    "Small worms got onto your legs when you walked through the mud.",
+    "You found a fruit that smells great but you do not know what it is.",
+    "There are many mosquitoes and your spray is almost empty.",
+    "A big fallen tree is blocking the only path forward.",
+    "All the animal sounds in the jungle suddenly stopped. Something is near.",
+    "Your knife got stuck in a thick vine and you cannot get it out.",
+    "A group of monkeys is throwing fruit down at you from the trees.",
+    "You stepped into deep mud and lost one shoe.",
+    "The river you were following split into five smaller rivers.",
+    "A bright red frog is sitting on your water bottle. Do not touch it!",
+    "It is so wet that your matches will not light.",
+    "You found a hollow tree — great for shelter, but something lives there.",
+    "You fell over some thick roots and dropped your bag.",
+    "You need to cross a bridge made of old vines.",
+    "A snake is resting on a branch just above the path.",
+    "Ants found your food bag while you were sleeping.",
+    "It started raining hard and the river is rising fast.",
+    "You found some berries you can eat, but they make everything purple.",
+    "A parrot keeps saying the word 'danger'. Someone taught it that.",
+    "Vines got wrapped around your bag. You cannot move forward.",
+    "The path disappeared. Everything looks the same in every direction.",
+    "A bat flew into your face in the dark.",
+    "Your food is going bad fast because it is so hot and wet.",
+    "You found a flat open area but the mud is too soft to stand on.",
+    "You need to cross the river but have no rope to make a raft.",
+    "A beautiful butterfly is actually very dangerous. Stay away!",
+    "Your hat is gone and there is a gap in the trees. The sun is very strong.",
+    "The jungle at night is very dark and very loud.",
+  ],
+  swamp:[
+    "Your boot got stuck in the mud and came off your foot.",
+    "A frog jumped onto your face when you were trying to cross.",
+    "The water is very dark. You cannot see what is under it.",
+    "A big cloud of mosquitoes is flying around your head.",
+    "The ground you are standing on is slowly sinking.",
+    "A strange green gas is rising from the water near you.",
+    "Your map is getting wet and the writing is disappearing.",
+    "A big log just moved by itself. It might not be a log.",
+    "Mud got into your bag and covered all your food.",
+    "You need to cross the water but there are no stones to step on.",
+    "Strange sounds are coming from under the water.",
+    "Your torch is bouncing light off the water. You cannot see well.",
+    "Small glowing lights led you off the path. Now you are lost.",
+    "The plants are so thick here you cannot walk in a straight line.",
+    "A big bird took the fish you caught. It was your only food today.",
+    "The smell is very bad and it is hard to think clearly.",
+    "You found some solid ground but something is moving under it.",
+    "A vine looks strong enough to swing across. But is it really?",
+    "Your small log raft is starting to fall apart.",
+    "Small fish keep biting your toes.",
+    "You need to make a fire but there is no dry wood anywhere.",
+    "A very large dragonfly keeps buzzing next to your ear.",
+    "The fog is so thick you walked right into a tree.",
+    "The frogs are so loud at night that no one can sleep.",
+    "Your water filter is already full of mud.",
+    "A water bird is guarding the only dry land you found.",
+    "You need to swim but your bag is too heavy to carry.",
+    "Your phone got splashed and the screen is not working.",
+    "The stick you put in the ground to mark the path has sunk into the mud.",
+    "You found higher ground but it is covered in slippery green plants.",
+    "A turtle is very cute but keeps following you everywhere.",
+  ],
+  cave:[
+    "Your torch battery died. It is completely dark now.",
+    "You hear water dripping but cannot find where it is coming from.",
+    "Bats flew out suddenly and knocked your bag off the ledge.",
+    "The cave path splits into three. You do not know which to take.",
+    "Water is slowly rising inside because of rain outside.",
+    "You touched something on the wall and it moved.",
+    "Your rope was not long enough to climb down to the next part.",
+    "Some things on the wall are glowing. They look amazing but you do not know what they are.",
+    "The echo in here makes it very hard to know where sounds come from.",
+    "The air feels heavy and it is a little harder to breathe.",
+    "You slipped on wet rocks and dropped your backpack.",
+    "A rock fell from the ceiling. More might come down.",
+    "You found a very small gap to go through. Your bag will not fit.",
+    "The cave is getting warmer. That might not be a good sign.",
+    "The marks you made on the wall with chalk got wet and disappeared.",
+    "You found some mushrooms growing in the dark. Are they safe?",
+    "The only way out means swimming under water for part of the way.",
+    "You dropped something and heard it fall for a very long time.",
+    "A group of sleeping bats is above the path you need to use.",
+    "The floor has deep cracks. You need to step over them carefully.",
+    "Your food smells good to something else that lives in this cave.",
+    "You found a lake inside the cave. Something is moving in the water.",
+    "The map you drew is correct but you drew it upside down.",
+    "Fresh air is coming from the wrong direction.",
+    "You need to cross an underground river but there is no bridge.",
+    "You found old drawings on the cave wall! But stopping used up your torch time.",
+    "Your whistle echoes so much that it gives everyone a headache.",
+    "The ceiling is getting lower and lower as you walk.",
+    "You sat on a rock and it broke. There is a deep hole below.",
+    "There is a faint light ahead — but which direction is it coming from?",
+    "Strange glowing animals are beautiful but they are on your only path.",
+  ],
+};
+
+let state={
+  mode:'items',itemsTab:'same',teamCount:2,teamNames:[],
+  questions:[],qTimerSecs:60,teams:[],round:1,
+  currentScenarios:{},usedScenarios:{},currentQIndex:-1,
+  timerInterval:null,timerRunning:false,timerValue:120,
+  diceQueue:[],diceQueueIdx:0,
+  correctTeams:new Set(),scoresApplied:false,
+};
+
+function selectMode(m){
+  state.mode=m;
+  document.getElementById('modeItemsCard').classList.toggle('selected',m==='items');
+  document.getElementById('modeQCard').classList.toggle('selected',m==='questions');
+  document.getElementById('itemsConfig').style.display=m==='items'?'block':'none';
+  document.getElementById('questionsConfig').style.display=m==='questions'?'block':'none';
+}
+selectMode('items');
+
+function setItemsTab(tab){
+  state.itemsTab=tab;
+  document.getElementById('tabSame').classList.toggle('active',tab==='same');
+  document.getElementById('tabDiff').classList.toggle('active',tab==='different');
+  document.getElementById('sameItemsPanel').style.display=tab==='same'?'block':'none';
+  document.getElementById('diffItemsPanel').style.display=tab==='different'?'block':'none';
+}
+
+function setTeamCount(n){
+  state.teamCount=n;
+  document.querySelectorAll('.team-count-btn').forEach((b,i)=>b.classList.toggle('selected',i===n-2));
+  renderTeamNameInputs();
+  renderPerTeamItems();
+}
+
+function renderTeamNameInputs(){
+  const grid=document.getElementById('teamNamesGrid');
+  grid.innerHTML='';
+  for(let i=0;i<state.teamCount;i++){
+    const inp=document.createElement('input');
+    inp.className='team-name-input';
+    inp.placeholder=`Team ${i+1} Name`;
+    inp.value=state.teamNames[i]||'';
+    inp.oninput=e=>{state.teamNames[i]=e.target.value;renderPerTeamItems();};
+    grid.appendChild(inp);
+  }
+}
+
+function renderPerTeamItems(){
+  const grid=document.getElementById('perTeamItemsGrid');
+  grid.innerHTML='';
+  for(let i=0;i<state.teamCount;i++){
+    const name=document.querySelectorAll('.team-name-input')[i]?.value||`Team ${i+1}`;
+    const row=document.createElement('div');
+    row.className='per-team-row';
+    row.innerHTML=`<div class="per-team-label">✏️ ${name}</div><div class="per-team-inputs" id="pti_${i}"></div>`;
+    grid.appendChild(row);
+    const div=document.getElementById(`pti_${i}`);
+    for(let j=0;j<5;j++){
+      const inp=document.createElement('input');
+      inp.className='item-input';inp.placeholder=`Item ${j+1}`;inp.id=`di_${i}_${j}`;
+      div.appendChild(inp);
+    }
+  }
+}
+renderTeamNameInputs();renderPerTeamItems();
+
+function loadCSV(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    state.questions=ev.target.result.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{
+      const p=l.split(',');return{q:p[0]?.trim()||'',a:p.slice(1).join(',').trim()||''};
+    }).filter(x=>x.q);
+    renderCSVPreview();
+  };r.readAsText(f);
+}
+
+function renderCSVPreview(){
+  const d=document.getElementById('csvPreview');
+  d.innerHTML=`<p style="font-size:0.78rem;color:var(--muted);margin-bottom:0.4rem;">${state.questions.length} questions loaded</p>`;
+  state.questions.slice(0,5).forEach(q=>{d.innerHTML+=`<div class="csv-q-item">${q.q} <span class="csv-q-answer">→ ${q.a}</span></div>`;});
+  if(state.questions.length>5)d.innerHTML+=`<div class="csv-q-item" style="color:var(--muted)">...and ${state.questions.length-5} more</div>`;
+}
+
+function startGame(){
+  state.teamNames=[];
+  document.querySelectorAll('.team-name-input').forEach((inp,i)=>{state.teamNames[i]=inp.value.trim()||`Team ${i+1}`;});
+  const shuffled=[...ISLANDS].sort(()=>Math.random()-0.5);
+  state.teams=[];
+  for(let i=0;i<state.teamCount;i++){
+    const island=shuffled[i%ISLANDS.length];
+    let items=[];
+    if(state.mode==='items'){
+      if(state.itemsTab==='same'){
+        for(let j=1;j<=5;j++)items.push(document.getElementById(`item${j}`).value.trim()||`Item ${j}`);
+      }else{
+        for(let j=0;j<5;j++)items.push(document.getElementById(`di_${i}_${j}`)?.value.trim()||`Item ${j+1}`);
+      }
+    }
+    state.teams.push({name:state.teamNames[i],island:island.key,hp:3,rescued:false,items,usedItems:new Array(5).fill(false)});
+  }
+  state.round=1;state.usedScenarios={};
+  ISLANDS.forEach(isl=>{state.usedScenarios[isl.key]=[];});
+  state.currentQIndex=-1;
+  state.timerValue=state.mode==='items'?120:parseInt(document.getElementById('qTimerSeconds').value)||60;
+  state.qTimerSecs=state.timerValue;
+  state.timerRunning=false;clearInterval(state.timerInterval);
+  showScreen('gameScreen');renderGame();
+}
+
+function renderGame(){
+  document.getElementById('roundBadge').textContent=`Round ${state.round} / 10`;
+  state.timerValue=state.mode==='items'?120:state.qTimerSecs;
+  state.timerRunning=false;clearInterval(state.timerInterval);
+  updateTimerDisplay();
+  document.getElementById('timerStartBtn').textContent='▶';
+  document.getElementById('timerStartBtn').classList.remove('active');
+  const qp=document.getElementById('questionPanel');
+  if(state.mode==='questions'){qp.style.display='block';setupQuestion();}
+  else qp.style.display='none';
+  document.getElementById('rollDiceBtn').style.display=state.mode==='questions'?'inline-block':'none';
+  // Assign scenarios
+  state.teams.forEach(team=>{
+    if(!team.rescued){
+      const pool=SCENARIOS[team.island]||[];
+      const used=state.usedScenarios[team.island]||[];
+      let avail=pool.map((_,i)=>i).filter(i=>!used.includes(i));
+      if(!avail.length){state.usedScenarios[team.island]=[];avail=pool.map((_,i)=>i);}
+      const idx=avail[Math.floor(Math.random()*avail.length)];
+      state.usedScenarios[team.island].push(idx);
+      state.currentScenarios[team.name]=pool[idx];
+    }
+  });
+  renderIslandsTable();
+}
+
+function renderIslandsTable(){
+  const hr=document.getElementById('islandsHeaderRow'),br=document.getElementById('islandsBodyRow');
+  hr.innerHTML='';br.innerHTML='';
+  state.teams.forEach(team=>{
+    const isl=ISLANDS.find(i=>i.key===team.island);
+    const th=document.createElement('th');th.style.padding='0.25rem';
+    th.innerHTML=`<div class="island-header ${isl?.thClass||''}">${isl?.label||team.island}</div>`;
+    hr.appendChild(th);
+    const td=document.createElement('td');td.style.padding='0.25rem';
+    const MAX_HP=5,dHP=Math.max(0,Math.min(team.hp,MAX_HP));
+    let hearts='';for(let h=0;h<MAX_HP;h++)hearts+=`<span class="hp-heart${h>=dHP?' lost':''}">❤️</span>`;
+    let itemsHTML='';
+    if(state.mode==='items'){
+      itemsHTML='<div class="team-items-list">'+team.items.map((item,idx)=>
+        `<span class="item-badge${team.usedItems[idx]?' used':''}" onclick="toggleItem('${team.name.replace(/'/g,"\\'")}',${idx})">${item}</span>`
+      ).join('')+'</div>';
+    }
+    const scenario=state.currentScenarios[team.name]||'';
+    td.innerHTML=`<div class="island-cell${team.rescued?' rescued':''}">
+      <div class="team-name-display">${team.name}</div>
+      ${team.rescued?'<div class="rescued-badge">🚁 Rescued!</div>':''}
+      <div class="hp-display">${hearts}</div>
+      <div class="hp-adj">
+        <button onclick="adjustHP('${team.name.replace(/'/g,"\\'")}', -1)">–1 HP</button>
+        <button onclick="adjustHP('${team.name.replace(/'/g,"\\'")}', +1)">+1 HP</button>
+      </div>
+      ${itemsHTML}
+      ${!team.rescued&&scenario&&state.mode==='items'?`<div class="scenario-box" onclick="openSpotlight('${team.name.replace(/'/g,"\\'")}')">${scenario}</div>`:''}
+      ${!team.rescued&&state.mode==='items'?`<button class="roll-for-team-btn" onclick="rollForTeam('${team.name.replace(/'/g,"\\'")}')">🎲 Roll dice</button>`:''}
+    </div>`;
+    br.appendChild(td);
+  });
+}
+
+function toggleItem(n,idx){
+  const t=state.teams.find(t=>t.name===n);
+  if(!t||t.rescued||t.usedItems[idx])return;
+  t.usedItems[idx]=true;renderIslandsTable();
+}
+function adjustHP(n,d){
+  const t=state.teams.find(t=>t.name===n);if(!t)return;
+  t.hp=Math.max(0,t.hp+d);
+  if(t.hp===0&&!t.rescued)rescueTeam(n);
+  renderIslandsTable();checkWinCondition();
+}
+function openSpotlight(n){
+  const t=state.teams.find(t=>t.name===n);
+  const isl=ISLANDS.find(i=>i.key===t?.island);
+  document.getElementById('spotIslandName').textContent=isl?.label||'';
+  document.getElementById('spotTeamName').textContent=t?.name||'';
+  document.getElementById('spotScenario').textContent=state.currentScenarios[n]||'';
+  document.getElementById('scenarioSpotlight').style.display='flex';
+}
+function closeSpotlight(e){if(e.target.id==='scenarioSpotlight')document.getElementById('scenarioSpotlight').style.display='none';}
+
+function updateTimerDisplay(){
+  const m=Math.floor(state.timerValue/60),s=state.timerValue%60;
+  const el=document.getElementById('timerDisplay');
+  el.textContent=`${m}:${String(s).padStart(2,'0')}`;
+  el.className='timer-display'+(state.timerValue<=10?' warning':'');
+}
+function toggleTimer(){
+  if(state.timerRunning){
+    clearInterval(state.timerInterval);state.timerRunning=false;
+    document.getElementById('timerStartBtn').textContent='▶';
+    document.getElementById('timerStartBtn').classList.remove('active');
+  }else{
+    state.timerRunning=true;
+    document.getElementById('timerStartBtn').textContent='⏸';
+    document.getElementById('timerStartBtn').classList.add('active');
+    state.timerInterval=setInterval(()=>{
+      if(state.timerValue<=0){clearInterval(state.timerInterval);state.timerRunning=false;document.getElementById('timerStartBtn').textContent='▶';document.getElementById('timerStartBtn').classList.remove('active');return;}
+      state.timerValue--;updateTimerDisplay();
+    },1000);
+  }
+}
+function resetTimer(){
+  clearInterval(state.timerInterval);state.timerRunning=false;
+  state.timerValue=state.mode==='items'?120:state.qTimerSecs;
+  updateTimerDisplay();document.getElementById('timerStartBtn').textContent='▶';
+  document.getElementById('timerStartBtn').classList.remove('active');
+}
+
+// BIG DICE
+const FACES=['⚀','⚁','⚂','⚃','⚄','⚅'];
+
+function rollForTeam(name){
+  // Open dice modal for a specific team (items mode — called from team card button)
+  state.diceQueue=state.teams.filter(t=>t.name===name);
+  state.diceQueueIdx=0;
+  showDiceModal();
+}
+
+function startRollPhase(){
+  // Used by questions mode (correct teams) and the controls bar
+  state.diceQueue=state.teams.filter(t=>!t.rescued);
+  if(!state.diceQueue.length)return;
+  state.diceQueueIdx=0;showDiceModal();
+}
+function showDiceModal(){
+  const team=state.diceQueue[state.diceQueueIdx];
+  if(!team){closeDiceModal();return;}
+  const single=state.diceQueue.length===1;
+  document.getElementById('diceModalTeam').textContent=team.name;
+  document.getElementById('diceProgress').textContent=single?'':(`Team ${state.diceQueueIdx+1} of ${state.diceQueue.length}`);
+  document.getElementById('bigDiceFace').innerHTML='🎲';
+  document.getElementById('bigDiceFace').className='big-dice-face';
+  document.getElementById('diceHpResult').textContent='';
+  document.getElementById('diceHpResult').className='dice-hp-result';
+  document.getElementById('bigRollBtn').style.display='block';
+  document.getElementById('bigRollBtn').disabled=false;
+  document.getElementById('nextTeamBtn').style.display='none';
+  document.getElementById('diceModal').style.display='flex';
+}
+function doRoll(){
+  const team=state.diceQueue[state.diceQueueIdx];if(!team)return;
+  const val=Math.floor(Math.random()*6)+1;
+  const faceEl=document.getElementById('bigDiceFace');
+  // Show number large + face emoji — number is unambiguous even if emoji renders oddly
+  faceEl.innerHTML=`<span style="font-size:3.5rem;display:block;font-family:var(--title);line-height:1;">${val}</span><span style="font-size:3rem;">${FACES[val-1]}</span>`;
+  faceEl.className='big-dice-face rolling';
+  setTimeout(()=>{faceEl.className='big-dice-face';},450);
+  const res=document.getElementById('diceHpResult');
+  if(val<=2){team.hp=Math.max(0,team.hp-1);res.textContent=`${val} → –1 HP`;res.className='dice-hp-result lose';if(team.hp===0&&!team.rescued)rescueTeam(team.name);}
+  else if(val<=4){res.textContent=`${val} → No change`;res.className='dice-hp-result keep';}
+  else{team.hp++;res.textContent=`${val} → +1 HP! 🎉`;res.className='dice-hp-result gain';}
+  document.getElementById('bigRollBtn').style.display='none';
+  const single=state.diceQueue.length===1;
+  const isLast=state.diceQueueIdx>=state.diceQueue.length-1;
+  const nb=document.getElementById('nextTeamBtn');
+  nb.textContent=single?'Close ✓':(isLast?'Done ✓':'Next Team →');
+  nb.style.display='block';
+  renderIslandsTable();checkWinCondition();
+}
+function advanceDiceQueue(){
+  state.diceQueueIdx++;
+  if(state.diceQueueIdx>=state.diceQueue.length)closeDiceModal();
+  else showDiceModal();
+}
+function closeDiceModal(){document.getElementById('diceModal').style.display='none';}
+
+// Q MODE
+function setupQuestion(){
+  state.correctTeams=new Set();state.scoresApplied=false;
+  const pool=state.questions;
+  if(!pool.length){document.getElementById('questionText').textContent='No questions loaded!';return;}
+  state.currentQIndex=(state.currentQIndex+1)%pool.length;
+  const q=pool[state.currentQIndex];
+  document.getElementById('questionText').textContent=q.q;
+  document.getElementById('answerText').textContent=`✅ ${q.a}`;
+  document.getElementById('answerText').className='answer-text';
+  document.getElementById('correctSection').style.display='none';
+  document.getElementById('correctBtns').innerHTML='';
+}
+function revealAnswer(){
+  document.getElementById('answerText').className='answer-text visible';
+  const cb=document.getElementById('correctBtns');cb.innerHTML='';
+  state.teams.filter(t=>!t.rescued).forEach(team=>{
+    const btn=document.createElement('button');btn.className='correct-btn';
+    btn.textContent=`✓ ${team.name}`;
+    btn.onclick=()=>{
+      if(state.correctTeams.has(team.name)){state.correctTeams.delete(team.name);btn.classList.remove('marked');}
+      else{state.correctTeams.add(team.name);btn.classList.add('marked');}
+    };
+    cb.appendChild(btn);
+  });
+  document.getElementById('correctSection').style.display='block';
+}
+function applyQScores(){
+  if(state.scoresApplied)return;state.scoresApplied=true;
+  // Wrong teams lose 1 HP
+  state.teams.filter(t=>!t.rescued&&!state.correctTeams.has(t.name)).forEach(team=>{
+    team.hp=Math.max(0,team.hp-1);
+    if(team.hp===0&&!team.rescued)rescueTeam(team.name);
+  });
+  renderIslandsTable();checkWinCondition();
+  // Correct teams roll dice
+  state.diceQueue=state.teams.filter(t=>!t.rescued&&state.correctTeams.has(t.name));
+  if(state.diceQueue.length>0){state.diceQueueIdx=0;showDiceModal();}
+}
+
+function setTimerTo(secs){
+  clearInterval(state.timerInterval);state.timerRunning=false;
+  state.timerValue=secs;updateTimerDisplay();
+  document.getElementById('timerStartBtn').textContent='▶';
+  document.getElementById('timerStartBtn').classList.remove('active');
+}
+function adjustTimer(delta){
+  clearInterval(state.timerInterval);state.timerRunning=false;
+  state.timerValue=Math.max(10,state.timerValue+delta);updateTimerDisplay();
+  document.getElementById('timerStartBtn').textContent='▶';
+  document.getElementById('timerStartBtn').classList.remove('active');
+}
+function nextRound(){
+  if(state.round>=10){endGame();return;}
+  state.round++;renderGame();
+}
+function rescueTeam(n){const t=state.teams.find(t=>t.name===n);if(t){t.rescued=true;t.hp=0;}}
+function checkWinCondition(){
+  const alive=state.teams.filter(t=>!t.rescued);
+  if(alive.length===1){endGame();return;}
+  if(alive.length===0){endGame();return;}
+}
+function endGame(){
+  clearInterval(state.timerInterval);document.getElementById('diceModal').style.display='none';
+  if(state.mode==='items'){
+    // Show penalty screen first
+    const cards=document.getElementById('penaltyCards');
+    cards.innerHTML='';
+    state.teams.forEach(team=>{
+      const unused=team.usedItems.filter(u=>!u).length;
+      const wasRescued=team.rescued;
+      const hpBefore=team.hp;
+      if(!wasRescued){
+        team.hp=Math.max(0,team.hp-unused);
+        if(team.hp===0)team.rescued=true;
+      }
+      const icon=wasRescued?'🚁':(unused===0?'🌟':'📦');
+      const hasPenalty=!wasRescued&&unused>0;
+      const card=document.createElement('div');
+      card.className=`penalty-card ${hasPenalty?'has-penalty':'no-penalty'}`;
+      const isl=ISLANDS.find(i=>i.key===team.island);
+      let itemsHTML=team.items.map((item,idx)=>
+        `<span class="penalty-item ${team.usedItems[idx]?'used':'unused'}">${item}</span>`
+      ).join('');
+      let hpLine='';
+      if(wasRescued){
+        hpLine=`<div class="penalty-rescued-note">Already rescued before item check</div>`;
+      }else if(unused===0){
+        hpLine=`<div class="penalty-hp-change ok">All items used! No penalty ✓</div>`;
+      }else{
+        hpLine=`<div class="penalty-hp-change bad">${unused} unused item${unused>1?'s':''} → –${unused} HP (${hpBefore} → ${team.hp}${team.rescued?' → Rescued!':''})</div>`;
+      }
+      card.innerHTML=`
+        <div class="penalty-icon">${icon}</div>
+        <div style="flex:1;">
+          <div class="penalty-team-name">${team.name} <span style="font-size:0.78rem;color:var(--muted);font-weight:600;">${isl?.label||''}</span></div>
+          <div class="penalty-items">${itemsHTML}</div>
+          ${hpLine}
+        </div>`;
+      cards.appendChild(card);
+    });
+    showScreen('penaltyScreen');
+  } else {
+    showFinalWin();
+  }
+}
+function showFinalWin(){
+  const alive=state.teams.filter(t=>!t.rescued);
+  if(!alive.length){
+    document.getElementById('winEmoji').textContent='🤝';
+    document.getElementById('winTitle').textContent='Everyone got rescued!';
+    document.getElementById('winSubtitle').textContent='The islands defeated all teams — better luck next time!';
+    document.getElementById('winTeams').innerHTML='';
+  }else if(alive.length===1){
+    document.getElementById('winEmoji').textContent='🏆';
+    document.getElementById('winTitle').textContent=`${alive[0].name} wins!`;
+    document.getElementById('winSubtitle').textContent='They survived the island until the end! 🎉';
+    document.getElementById('winTeams').innerHTML=`<div class="win-team-badge">🏝️ ${alive[0].name} — ${alive[0].hp} HP remaining</div>`;
+  }else{
+    document.getElementById('winEmoji').textContent='🥳';
+    document.getElementById('winTitle').textContent='Game Over!';
+    document.getElementById('winSubtitle').textContent='Multiple teams survived! Final HP standings:';
+    document.getElementById('winTeams').innerHTML=alive.sort((a,b)=>b.hp-a.hp).map(t=>`<div class="win-team-badge">🏝️ ${t.name} — ${t.hp} HP</div>`).join('');
+  }
+  showScreen('winScreen');
+}
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function resetGame(){clearInterval(state.timerInterval);state.timerRunning=false;document.getElementById('diceModal').style.display='none';showScreen('setupScreen');}
+</script>
+</body>
+</html>
