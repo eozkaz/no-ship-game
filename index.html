@@ -1452,12 +1452,33 @@ function renderPerTeamItems(){
 }
 renderTeamNameInputs();renderPerTeamItems();
 
+function parseCSVLine(line){
+  // Handles Excel-style quoted fields (commas inside quotes, "" as an escaped quote)
+  const fields=[];let cur='';let inQuotes=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(inQuotes){
+      if(ch==='"'){
+        if(line[i+1]==='"'){cur+='"';i++;}
+        else{inQuotes=false;}
+      }else cur+=ch;
+    }else{
+      if(ch==='"')inQuotes=true;
+      else if(ch===','){fields.push(cur);cur='';}
+      else cur+=ch;
+    }
+  }
+  fields.push(cur);
+  return fields;
+}
+
 function loadCSV(e){
   const f=e.target.files[0];if(!f)return;
   const r=new FileReader();
   r.onload=ev=>{
-    state.questions=ev.target.result.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{
-      const p=l.split(',');return{q:p[0]?.trim()||'',a:p.slice(1).join(',').trim()||''};
+    state.questions=ev.target.result.split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(l=>{
+      const p=parseCSVLine(l);
+      return{q:(p[0]||'').trim(),a:p.slice(1).join(',').trim()};
     }).filter(x=>x.q);
     renderCSVPreview();
   };r.readAsText(f);
@@ -1473,6 +1494,14 @@ function renderCSVPreview(){
 function startGame(){
   state.teamNames=[];
   document.querySelectorAll('.team-name-input').forEach((inp,i)=>{state.teamNames[i]=inp.value.trim()||`Team ${i+1}`;});
+  // Guard against duplicate team names (team lookups are name-based, so two identical
+  // names would make button clicks on one team's card affect the wrong team)
+  const seenNames={};
+  state.teamNames=state.teamNames.map(name=>{
+    if(!seenNames[name]){seenNames[name]=1;return name;}
+    seenNames[name]++;
+    return `${name} (${seenNames[name]})`;
+  });
   const shuffled=[...ISLANDS].sort(()=>Math.random()-0.5);
   state.teams=[];
   for(let i=0;i<state.teamCount;i++){
